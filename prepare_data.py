@@ -16,8 +16,8 @@ class PrepareDataset(Dataset):
             root_dir (string): Directory with all the wavs.
 
         """
-        print(csv_file)
-        self.landmarks_frame = pd.read_csv(csv_file, sep='|', header=None)
+        # self.landmarks_frame = pd.read_csv(csv_file, sep='|', header=None)
+        self.landmarks_frame = pd.read_csv(csv_file, sep='|', header=None, dtype={'code':str})
         self.root_dir = root_dir
 
     def load_wav(self, filename):
@@ -27,7 +27,8 @@ class PrepareDataset(Dataset):
         return len(self.landmarks_frame)
 
     def __getitem__(self, idx):
-        wav_name = os.path.join(self.root_dir, self.landmarks_frame.ix[idx, 0]) + '.wav'
+        # print(self.root_dir, self.landmarks_frame.ix[idx, 0])
+        wav_name = os.path.join(self.root_dir, self.landmarks_frame.ix[idx, 0][2:]) + '.wav'
         mel, mag = get_spectrograms(wav_name)
         
         np.save(wav_name[:-4] + '.pt', mel)

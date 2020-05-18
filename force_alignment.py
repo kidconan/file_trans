@@ -1,24 +1,40 @@
+import os
+
 from preprocess import get_dataset, DataLoader, collate_fn_transformer
 from network import *
 from tensorboardX import SummaryWriter
 import torchvision.utils as vutils
-import os
 from tqdm import tqdm
-os.environ['CUDA_VISIBLE_DEVICES'] = '5,6,7,8'
 
-check_point = ''
+
+def get_D(alignment):
+    D = np.array([0 for _ in range(np.shape(alignment)[1])])
+
+    for i in range(np.shape(alignment)[0]):
+        max_index = alignment[i].tolist().index(alignment[i].max())
+        D[max_index] = D[max_index] + 1
+
+    return D
+
+if not os.path.exists('BN_alignments'):
+    os.mkdir('BN_alignments')
+check_point = './BZ_checkpoint/checkpoint_transformer_820000.pth.tar'
 para_file = t.load(check_point)
-model = Model().cuda()
+
+model = nn.DataParallel(Model().cuda())
+model.load_state_dict(para_file['model'])
 model.eval()
-for epoch in range(hp.epochs):
+for epoch in range(1):
 
     dataset = get_dataset()
-    dataloader = DataLoader(dataset, batch_size=1, shuffle=False, collate_fn=collate_fn_transformer, drop_last=True, num_workers=16)
-    pbar = tqdm(dataloader)
-    for i, data in enumerate(pbar):
-        pbar.set_description("Processing at epoch %d"%epoch)
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=False, collate_fn=collate_fn_transformer, drop_last=False, num_workers=1)
+    k = 0
+    # pbar = tqdm(dataloader)
+    # for i, data in enumerate(pbar):
+    for character, mel, mel_input, pos_text, pos_mel, _  in dataloader:
+        # pbar.set_description("Processing at epoch %d"%epoch)
             
-        character, mel, mel_input, pos_text, pos_mel, _ = data
+        # character, mel, mel_input, pos_text, pos_mel, _ = data
         
         stop_tokens = t.abs(pos_mel.ne(0).type(t.float) - 1)
         
@@ -28,8 +44,13 @@ for epoch in range(hp.epochs):
         pos_text = pos_text.cuda()
         pos_mel = pos_mel.cuda()
         
-        _, _, _, _, _, attns_dec = m.forward(character, mel_input, pos_text, pos_mel)
+        _, _, attn_probs, _, _, _ = model.forward(character, mel_input, pos_text, pos_mel)
 
-        attns_dec = attns_dec[0]
-        attns_dec = attns_dec.data.cpu().tolist()
-        print(attns_dec)
+        attn_probs = attn_probs[0].sum(dim=0)
+        attn_probs = attn_probs.data.cpu().numpy()
+        # attn_probs = attn_probs.data.cpu().argmax(dim=-1)
+        # attn_probs = attn_probs.numpy()
+        # print(attn_probs.shape)
+        attn_probs = get_D(attn_probs)
+        np.save('./alignments/'+str(k)+'.npy', attn_probs)
+        k += 1
