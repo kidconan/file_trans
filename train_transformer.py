@@ -39,7 +39,7 @@ def main():
     for epoch in range(hp.epochs):
 
         dataloader = DataLoader(dataset, batch_size=hp.batch_size, shuffle=True, collate_fn=collate_fn_transformer,
-                                drop_last=True, num_workers=1)
+                                drop_last=True, num_workers=0)
         pbar = tqdm(dataloader)
         for i, data in enumerate(pbar):
             pbar.set_description("Processing at epoch %d"%epoch)
