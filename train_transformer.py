@@ -135,7 +135,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--restore_step', type=int, default=0)
+    parser.add_argument('--restore-step', type=int, default=0)
     args = parser.parse_args()
 
     main(args)
