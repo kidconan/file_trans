@@ -4,6 +4,8 @@ from tensorboardX import SummaryWriter
 import torchvision.utils as vutils
 import os
 from tqdm import tqdm
+import torch
+import argparse
 
 # import torch
 # gpu = 3
@@ -17,7 +19,7 @@ def adjust_learning_rate(optimizer, step_num, warmup_step=4000):
         param_group['lr'] = lr
 
         
-def main():
+def main(args):
 
     dataset = get_dataset()
     global_step = 0
@@ -32,6 +34,17 @@ def main():
 
     m.train()
     optimizer = t.optim.Adam(m.parameters(), lr=hp.lr)
+
+    try:
+        checkpoint = torch.load(os.path.join(
+            hp.checkpoint_path, 'checkpoint_%d.pth.tar' % args.restore_step))
+        model.load_state_dict(checkpoint['model'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        print("\n---Model Restored at Step %d---\n" % args.restore_step)
+    except:
+        print("\n---Start New Training---\n")
+        if not os.path.exists(hp.checkpoint_path):
+            os.mkdir(hp.checkpoint_path)
 
     pos_weight = t.FloatTensor([5.]).cuda()
     writer = SummaryWriter()
@@ -121,4 +134,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--restore_step', type=int, default=0)
+    args = parser.parse_args()
+
+    main(args)
