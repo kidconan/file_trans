@@ -22,7 +22,7 @@ check_point = './BZ_checkpoint/checkpoint_transformer_820000.pth.tar'
 para_file = t.load(check_point)
 
 model = nn.DataParallel(Model().cuda())
-model.load_state_dict(para_file['model'])
+model.load_state_dict(para_file['model'], map_location={'cuda:5':'cuda:0'})
 model.eval()
 for epoch in range(1):
 
@@ -46,7 +46,7 @@ for epoch in range(1):
         
         _, _, attn_probs, _, _, _ = model.forward(character, mel_input, pos_text, pos_mel)
 
-        attn_probs = attn_probs[0].sum(dim=0)
+        attn_probs = attn_probs[-1].sum(dim=0)
         attn_probs = attn_probs.data.cpu().numpy()
         # attn_probs = attn_probs.data.cpu().argmax(dim=-1)
         # attn_probs = attn_probs.numpy()
