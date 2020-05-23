@@ -96,3 +96,4 @@ for epoch in range(1):
         attn_probs = get_D(attn_probs)
         np.save('./alignments/'+str(k)+'.npy', attn_probs)
         k += 1
+        print(k)
