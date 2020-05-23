@@ -6,7 +6,8 @@ import os
 from tqdm import tqdm
 import torch
 import argparse
-
+import hyperparams as hp
+import sys
 # import torch
 # gpu = 3
 # gpus = [gpu,2]
@@ -22,7 +23,7 @@ def adjust_learning_rate(optimizer, step_num, warmup_step=4000):
 def main(args):
 
     dataset = get_dataset()
-    global_step = 0
+    global_step = args.restore_step
     
     m = nn.DataParallel(Model().cuda())
     # # print(type(m.module))
@@ -35,10 +36,14 @@ def main(args):
     m.train()
     optimizer = t.optim.Adam(m.parameters(), lr=hp.lr)
 
+    # print(os.path.join(
+    #         hp.checkpoint_path, 'checkpoint_transformer_%d.pth.tar' % args.restore_step))
     try:
+        print(os.path.join(
+            hp.checkpoint_path, 'checkpoint_transformer_%d.pth.tar' % args.restore_step))
         checkpoint = torch.load(os.path.join(
             hp.checkpoint_path, 'checkpoint_transformer_%d.pth.tar' % args.restore_step))
-        model.load_state_dict(checkpoint['model'])
+        m.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         print("\n---Model Restored at Step %d---\n" % args.restore_step)
     except:
@@ -49,7 +54,7 @@ def main(args):
     pos_weight = t.FloatTensor([5.]).cuda()
     writer = SummaryWriter()
     
-    for epoch in range(hp.epochs):
+    for epoch in range(args.start_epoch, hp.epochs):
 
         dataloader = DataLoader(dataset, batch_size=hp.batch_size, shuffle=True, collate_fn=collate_fn_transformer,
                                 drop_last=True, num_workers=0)
@@ -136,6 +141,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--restore-step', type=int, default=0)
+    parser.add_argument('--start-epoch', type=int, default=0)
     args = parser.parse_args()
 
     main(args)
