@@ -19,10 +19,10 @@ def get_D(alignment):
 if not os.path.exists('alignments'):
     os.mkdir('alignments')
 check_point = './checkpoint/checkpoint_transformer_820000.pth.tar'
-para_file = t.load(check_point)
+para_file = t.load(check_point, map_location={'cuda:5':'cuda:0'})
 
 model = nn.DataParallel(Model().cuda())
-model.load_state_dict(para_file['model'], map_location={'cuda:5':'cuda:0'})
+model.load_state_dict(para_file['model'])
 model.eval()
 for epoch in range(1):
 
