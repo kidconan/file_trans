@@ -40,7 +40,7 @@ train_config=conf/tuning/train_fastspeech.v1.yaml
 decode_config=conf/decode.yaml
 
 # knowledge distillation related
-teacher_model_path=exp/train_no_dev_pytorch_train_transformer.v1/results/model.last1.avg.best
+teacher_model_path=""
 teacher_decode_config=conf/decode_for_knowledge_dist.yaml
 do_filtering=false     # whether to do filtering using focus rate
 focus_rate_thres=0.65  # for phn taco2 around 0.65, phn transformer around 0.9
